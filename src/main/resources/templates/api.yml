@@ -1,0 +1,161 @@
+openapi: "3.0.0"
+servers:
+  - url: http://localhost:8080/
+info:
+  description: Licence verifivcation
+  version: "1.0.0"
+  title: Licence Service Verification API
+paths:
+  /licence-check:
+    post:
+      summary: Perform Licence Check
+      x-contracts:
+        - contractId: 1
+          name: Should Mark Licence as Active
+          priority: 1
+        - contractId: 2
+          name: Should Mark Licence as Inactive
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LicenceCheckRequest'
+        x-contracts:
+          - contractId: 1
+            headers:
+              Content-Type: application/json
+            body:
+              "client.id": 1234567890
+              licenceNumber: 123.123
+            matchers:
+              body:
+                - path: $.['client.id']
+                  type: by_regex
+                  value: "[0-9]{10}"
+          - contractId: 2
+            headers:
+              Content-Type: application/json
+            body:
+              "client.id": 1234567890
+              licenceNumber: 12345678
+            matchers:
+              body:
+                - path: $.['client.id']
+                  type: by_regex
+                  value: "[0-9]{10}"
+      responses:
+        '200':
+          description: created ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LicenceCheckResponse'
+          x-contracts:
+            - contractId: 1
+              body:
+                licenceCheckStatus: "ACTIVE"
+                "rejection.reason": null
+              headers:
+                Content-Type: application/json
+              matchers:
+                body:
+                  - path: $.['rejection.reason']
+                    type: by_command
+                    value: assertThatRejectionReasonIsNull($it)
+            - contractId: 2
+              body:
+                licenceCheckStatus: "INACTIVE"
+                "rejection.reason": "Licence is invalid"
+              headers:
+                Content-Type: application/json
+              matchers:
+                body:
+                  - path: $.['rejection.reason']
+                    type: by_command
+                    value: assertThatRejectionReasonIsNotNull($it)
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+#  /licence-check/{id}:
+#    get:
+#      summary: Return Licence List
+#      x-contracts:
+#        - contractId: 1
+#          name: Should return Licences that is active
+#          priority: 1
+#        - contractId: 2
+#          name: Should return Licences that is inactive
+#          priority: 2
+#      responses:
+#        '200':
+#          description: returned ok
+#          content:
+#            application/json:
+#              schema:
+#                type: Licence
+#                properties:
+#                  name:
+#                    type: string
+#                  status:
+#                    type: boolean
+#                  "licenceNumber":
+#                    type: integer
+#          x-contracts:
+#            - contractId: 1
+#              headers:
+#                contentType: application/json
+#              body:
+#                name: CAR LICENCE
+#                "active.licence": "ACTIVE"
+#                licenceNumber: 12345
+#            - contractId: 2
+#              headers:
+#                contentType: application/json
+#              body:
+#                name: CAR LICENCE
+#                "active.licence": "INACTIVE"
+#                licenceNumber: 12345
+#              matchers:
+#                body:
+#                  - path: $.['active.licence']
+#                    type: by_command
+#                    value: assertLicenceInactive($it)
+components:
+  schemas:
+    LicenceCheckResponse:
+      allOf:
+        - $ref: '#/components/schemas/LicenceCheckRequest'
+        - type: object
+          required:
+            - licenceCheckStatus
+          properties:
+            licenceCheckStatus:
+              type: string
+            "rejection.reason":
+              type: string
+
+    LicenceCheckRequest:
+      type: object
+      required:
+        - licenceNumber
+      properties:
+        "client.id":
+          type: integer
+        licenceNumber:
+          type: number
+
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: integer
+          format: int32
+        message:
+          type: string

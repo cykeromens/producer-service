@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-parent</artifactId>
+		<version>2.2.5.RELEASE</version>
+		<relativePath/> <!-- lookup parent from repository -->
+	</parent>
+	<groupId>com.ps</groupId>
+	<artifactId>producer-service</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<name>producer-service</name>
+	<description>Demo project for Spring Boot</description>
+
+	<properties>
+		<java.version>1.8</java.version>
+		<default.package>com.ps.producerservice</default.package>
+		<swagger-annotations-version>1.5.8</swagger-annotations-version>
+		<spring-boot-starter-web.version>2.2.1.RELEASE</spring-boot-starter-web.version>
+		<springfox-version>2.9.2</springfox-version>
+		<maven.compiler.source>${java.version}</maven.compiler.source>
+		<maven.compiler.target>${java.version}</maven.compiler.target>
+		<spring-cloud-contract.version>2.1.1.RELEASE</spring-cloud-contract.version>
+		<scc-oa3-version>2.1.1.1</scc-oa3-version>
+	</properties>
+
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>org.springframework.cloud</groupId>
+				<artifactId>spring-cloud-dependencies</artifactId>
+				<version>Hoxton.SR1</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
+
+	<dependencies>
+			<dependency>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-starter-test</artifactId>
+				<scope>test</scope>
+			</dependency>
+			<dependency>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-starter-web</artifactId>
+			</dependency>
+			<!--SpringFox dependencies -->
+			<dependency>
+				<groupId>io.springfox</groupId>
+				<artifactId>springfox-swagger2</artifactId>
+				<version>${springfox-version}</version>
+			</dependency>
+			<dependency>
+				<groupId>io.springfox</groupId>
+				<artifactId>springfox-swagger-ui</artifactId>
+				<version>${springfox-version}</version>
+			</dependency>
+				<dependency>
+					<groupId>org.openapitools</groupId>
+					<artifactId>jackson-databind-nullable</artifactId>
+					<version>0.1.0</version>
+				</dependency>
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-contract-verifier</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<!-- remove::end[] -->
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+			<!-- OPEN-API CONTRACT -->
+			<plugin>
+				<groupId>org.openapitools</groupId>
+				<artifactId>openapi-generator-maven-plugin</artifactId>
+				<version>4.2.2-SNAPSHOT</version>
+				<configuration>
+					<generateApiDocumentation>true</generateApiDocumentation>
+					<generateApiTests>true</generateApiTests>
+				</configuration>
+				<executions>
+					<execution>
+						<id>generate-contract</id>
+						<goals>
+							<goal>generate</goal>
+						</goals>
+						<configuration>
+							<inputSpec>${project.basedir}/src/main/resources/templates/api.yml</inputSpec>
+							<generatorName>spring</generatorName>
+							<output>${project.build.directory}/generated-sources</output>
+							<apiPackage>${default.package}.controller</apiPackage>
+							<modelPackage>${default.package}.model</modelPackage>
+							<invokerPackage>${default.package}</invokerPackage>
+							<configOptions>
+								<serializableModel>true</serializableModel>
+								<snapshotVersion>true</snapshotVersion>
+							</configOptions>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+
+			<!-- SPRING CLOUD CONTRACT TESTING-->
+			<plugin>
+				<groupId>org.springframework.cloud</groupId>
+				<artifactId>spring-cloud-contract-maven-plugin</artifactId>
+				<version>${spring-cloud-contract.version}</version>
+				<extensions>true</extensions>
+				<configuration>
+					<contractsDirectory>${project.basedir}/src/main/resources/templates</contractsDirectory>
+					<baseClassForTests>com.ps.producerservice.ContractVerifierBase</baseClassForTests>
+					<packageWithBaseClasses>com.ps.producerservice</packageWithBaseClasses>
+					<baseClassMappings>
+						<baseClassMapping>
+							<contractPackageRegex>.*templates.*</contractPackageRegex>
+							<baseClassFQN>com.ps.producerservice.ContractVerifierBase</baseClassFQN>
+						</baseClassMapping>
+					</baseClassMappings>
+				</configuration>
+				<dependencies>
+					<dependency>
+						<groupId>guru.springframework</groupId>
+						<artifactId>spring-cloud-contract-oa3</artifactId>
+						<version>${scc-oa3-version}</version>
+					</dependency>
+				</dependencies>
+			</plugin>
+		</plugins>
+	</build>
+</project>

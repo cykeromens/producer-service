@@ -1,0 +1,52 @@
+openapi: "3.0.0"
+servers:
+  - url: http://localhost:8080/
+info:
+  description: Licence verifivcation
+  version: "1.0.0"
+  title: Licence Service Verification API
+paths:
+  /licence-check:
+    get:
+      summary: Return Licence List
+      x-contracts:
+        - contractId: 1
+          name: Should return Licences that is active
+          priority: 1
+        - contractId: 2
+          name: Should return Licences that is inactive
+          priority: 2
+      responses:
+          '200':
+            description: returned ok
+            content:
+              application/json:
+                schema:
+                  type: Licence
+                  properties:
+                    name:
+                      type: string
+                    status:
+                      type: boolean
+                    "licenceNumber":
+                      type: integer
+            x-contracts:
+              - contractId: 1
+                headers:
+                  contentType: application/json
+                body:
+                  name: CAR LICENCE
+                  "active.licence": "ACTIVE"
+                  licenceNumber: 12345
+              - contractId: 2
+                headers:
+                  contentType: application/json
+                body:
+                  name: CAR LICENCE
+                  "active.licence": "INACTIVE"
+                  licenceNumber: 12345
+                matchers:
+                  body:
+                    - path: $.['active.licence']
+                      type: by_command
+                      value: assertLicenceInactive($it)
